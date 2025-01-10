@@ -115,14 +115,15 @@ async function onContentLoaded() {
         function updateTimestamp() {
             const now = new Date();
             updateTimeSpan.textContent = `Aktualisiert: ${now.toLocaleTimeString()}`;
-            loadingSpinner.style.display = 'inline-block';
-            setTimeout(() => {
-                loadingSpinner.style.display = 'none';
-            }, 1000);
+            // loadingSpinner.style.display = 'inline-block';
+            // setTimeout(() => {
+            //     loadingSpinner.style.display = 'none';
+            // }, 1000);
         }
-
-        setInterval(updateTimestamp, 10000);
         updateTimestamp();
+
+        // setInterval(updateTimestamp, 10000);
+        // updateTimestamp();
     } catch (error) {
         alert('Error loading HTML content');
         console.error('Error loading HTML content:', error);
