@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buying Bot</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .plugin-container {
+            width: 400px;
+            min-height: 600px;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #1a202c;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+            margin-left: 8px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab {
+            padding: 12px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+        }
+        .tab.active {
+            border-bottom: 2px solid #4a5568;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+            padding: 16px;
+            overflow-y: auto;
+            max-height: calc(100vh - 190px);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+        footer {
+            background-color: #f7fafc;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            position: fixed;
+            bottom: 0;
+            width: -webkit-fill-available;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button.primary {
+            background-color: #4a5568;
+            color: white;
+        }
+        button.secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        .url-input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .url-input-group input[type="url"] {
+            flex-grow: 1;
+            margin-right: 8px;
+        }
+        .url-input-group input[type="number"] {
+            width: 60px;
+            margin-right: 8px;
+        }
+        .url-input-group button {
+            padding: 8px;
+            font-size: 16px;
+        }
+        #addUrlButton {
+            margin-bottom: 16px;
+        }
+        .name-group {
+            display: flex;
+            gap: 8px;
+        }
+        .name-group input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="plugin-container">
+        <header>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <h1>Buying Bot</h1>
+        </header>
+        <div class="tabs">
+            <button class="tab active" data-tab="general">General</button>
+            <button class="tab" data-tab="personal">Personal</button>
+            <button class="tab" data-tab="payment">Payment</button>
+            <button class="tab" data-tab="proxy">Proxy</button>
+        </div>
+        <div id="generalTab" class="tab-content active">
+            <div class="form-group">
+                <label>URLs and Quantity</label>
+                <div id="urlInputs"></div>
+                <button id="addUrlButton" class="secondary">Add URL</button>
+            </div>
+            <div class="form-group">
+                <label for="refreshInterval">Refresh Interval (Seconds)</label>
+                <input type="number" id="refreshInterval" name="refreshInterval" placeholder="60">
+            </div>
+        </div>
+        <div id="personalTab" class="tab-content">
+            <div class="form-group">
+                <label>Name</label>
+                <div class="name-group">
+                    <input type="text" id="firstName" name="firstName" placeholder="First Name">
+                    <input type="text" id="lastName" name="lastName" placeholder="Last Name">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email">E-Mail</label>
+                <input type="email" id="email" name="email" placeholder="max@example.com">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" placeholder="+49 123 456789">
+            </div>
+            <div class="form-group">
+                <label for="street">Street and Housenumber</label>
+                <input type="text" id="street" name="street" placeholder="Musterstraße 123">
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" placeholder="Musterstadt">
+            </div>
+            <div class="form-group">
+                <label for="state">State</label>
+                <input type="text" id="state" name="state" placeholder="California">
+            </div>
+            <div class="form-group">
+                <label for="zipCode">Zip Code</label>
+                <input type="text" id="zipCode" name="zipCode" placeholder="12345">
+            </div>
+            <div class="form-group">
+                <label for="country">Country</label>
+                <input type="text" id="country" name="country" placeholder="Deutschland">
+            </div>
+        </div>
+        <div id="paymentTab" class="tab-content">
+            <div class="form-group">
+                <label for="cardNumber">Card Number</label>
+                <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456">
+            </div>
+            <div class="form-group">
+                <label for="expiryDate">Expiry Date</label>
+                <input type="text" id="expiryDate" name="expiryDate" placeholder="MM/YY">
+            </div>
+            <div class="form-group">
+                <label for="cvv">CVV</label>
+                <input type="text" id="cvv" name="cvv" placeholder="123">
+            </div>
+        </div>
+        <div id="proxyTab" class="tab-content">
+            <div class="form-group">
+                <label for="proxyUrl">Oxylabs Username</label>
+                <input type="text" id="proxyUsername" name="proxyUsername" placeholder="username">
+            </div>
+            <div class="form-group">
+                <label for="proxyPassword">Oxylabs Password</label>
+                <input type="password" id="proxyPassword" name="proxyPassword" placeholder="password">
+            </div>
+        </div>
+        <footer>
+            <button id="saveButton" class="secondary">Save</button>
+            <button id="startButton" class="primary">Start</button>
+        </footer>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
+
