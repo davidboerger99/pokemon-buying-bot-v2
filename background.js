@@ -1,3 +1,33 @@
+async function fetchFromOxylabs(url) {
+    const { config } = await chrome.storage.local.get('config');
+    console.log("Oxylabs username: ", config.oxylabsUsername);
+    console.log("Oxylabs password: ", config.oxylabsPassword);
+    
+    const body = {
+        "url": url,
+        "source": "universal",
+        "render": "html",
+    };
+    
+    const response = await fetch('https://realtime.oxylabs.io/v1/queries', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + btoa(`${config.oxylabsUsername}:${config.oxylabsPassword}`),
+        }
+    });
+    
+    if (!response.ok) {
+        console.log(await response.text());
+        throw new Error(`Error fetching data: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log("Data from Oxylabs: ", data);
+    return data;
+}
+
 function openTabs(urls) {
     return new Promise((resolve) => {
         let tabs = [];
@@ -32,16 +62,22 @@ function injectPluginOverlay(tabId) {
     });
 }
 
+async function checkAvailability(urls) {
+   for (let i = 0; i < urls.length; i++) {
+    await fetchFromOxylabs(urls[i].url);
+   }
+}
+
 chrome.runtime.onConnect.addListener((port) => {
     console.log("Verbindung hergestellt mit Popup.");
   
-    port.onMessage.addListener((message) => {
+    port.onMessage.addListener(async (message) => {
         if (message.action === 'startBot') {
-            console.log("Bot gestartet.", message.config);
-            chrome.storage.local.set({ config: message.config.config }, async () => {
-                const tabs = await openTabs(message.urls);
-                tabs.forEach(tabId => injectPluginOverlay(tabId));
-            });
+            console.log("Bot gestartet.", message.config);  
+            await chrome.storage.local.set({ config: message.config });
+            const tabs = await openTabs(message.urls);
+            tabs.forEach(tabId => injectPluginOverlay(tabId));
+            await checkAvailability(message.urls);
         }
     });
 });
