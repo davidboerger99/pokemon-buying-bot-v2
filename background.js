@@ -1,3 +1,5 @@
+// curl -i --proxy brd.superproxy.io:33335 --proxy-user brd-customer-hl_ee35ed84-zone-web_unlocker1:g940icec1tik -k "https://www.pokemoncenter.com/product/100-10019/pokemon-tcg-scarlet-and-violet-prismatic-evolutions-pokemon-center-elite-trainer-box"
+
 async function fetchFromOxylabs(url) {
     const { config } = await chrome.storage.local.get('config');
     console.log("Oxylabs username: ", config.oxylabsUsername);
@@ -7,6 +9,7 @@ async function fetchFromOxylabs(url) {
         "url": url,
         "source": "universal",
         "render": "html",
+        "geo_location": "United States"
     };
     
     const response = await fetch('https://realtime.oxylabs.io/v1/queries', {

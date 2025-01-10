@@ -11,6 +11,10 @@ const htmlInjection = `
         <div id="plugin-content">
             Dieser Tab wird vom Plugin kontrolliert.
         </div>
+        <div id="status-container">
+            <div id="proxy-status">Proxy Status: <span id="proxy-status-value">Undetected</span></div>
+            <div id="item-status">Item Status: <span id="item-status-value">Available</span></div>
+        </div>
         <div id="last-update">
             <span id="update-time">Wird aktualisiert...</span>
             <div id="loading-spinner"></div>
@@ -60,6 +64,20 @@ const styleInjection = `
             margin-bottom: 5px;
         }
 
+        #status-container {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        #proxy-status, #item-status {
+            margin-bottom: 2px;
+        }
+
+        #proxy-status-value, #item-status-value {
+            font-weight: bold;
+        }
+
         #last-update {
             font-size: 11px;
             color: #999;
@@ -93,7 +111,7 @@ const styleInjection = `
                 color: #fff;
             }
 
-            #plugin-content {
+            #plugin-content, #status-container {
                 color: #ccc;
             }
 
@@ -111,6 +129,8 @@ async function onContentLoaded() {
 
         const updateTimeSpan = document.getElementById('update-time');
         const loadingSpinner = document.getElementById('loading-spinner');
+        const proxyStatusValue = document.getElementById('proxy-status-value');
+        const itemStatusValue = document.getElementById('item-status-value');
 
         function updateTimestamp() {
             const now = new Date();
@@ -120,7 +140,24 @@ async function onContentLoaded() {
             //     loadingSpinner.style.display = 'none';
             // }, 1000);
         }
+
+        function updateProxyStatus(status) {
+            proxyStatusValue.textContent = status;
+            proxyStatusValue.style.color = status === 'Detected' ? '#ff4d4d' : '#4caf50';
+        }
+
+        function updateItemStatus(status) {
+            itemStatusValue.textContent = status;
+            itemStatusValue.style.color = status === 'Available' ? '#4caf50' : '#ff4d4d';
+        }
+
         updateTimestamp();
+        updateProxyStatus('Undetected');
+        updateItemStatus('Available');
+
+        // Example of how to update statuses (you can call these functions when needed)
+        // updateProxyStatus('Detected');
+        // updateItemStatus('Not Available');
 
         // setInterval(updateTimestamp, 10000);
         // updateTimestamp();
