@@ -85,7 +85,6 @@ function injectPluginOverlay(tabId) {
 
 async function checkAvailability(urls) {
    for (let i = 0; i < urls.length; i++) {
-    // await fetchFromOxylabs(urls[i].url);
     await fetchFromBrightData(urls[i].url);
    }
 }
@@ -176,7 +175,7 @@ async function setProxyStatusInOverlay(tabId, status) {
         function: (status) => {
             const proxyStatusValue = document.getElementById('proxy-status-value');
             proxyStatusValue.textContent = status;
-            proxyStatusValue.style.color = status === 'Detected' ? '#ff4d4d' : '#4caf50';
+            proxyStatusValue.style.color = status !== 'Undetected' ? '#ff4d4d' : '#4caf50';
         },
         args: [status]
     });
@@ -194,7 +193,7 @@ async function setItemStatusInOverlay(tabId, status) {
     });
 }
 
-async function startBackgroundAvailabilityCheck(tabId, url) {
+async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) {
 
     await showUpdateStatusInOverlay(tabId);
     // wait 4 seconds
@@ -206,17 +205,21 @@ async function startBackgroundAvailabilityCheck(tabId, url) {
         switch (itemAvailable) {
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
+                detectionsInARow = 0;
                 break;
             case 'notavailable':
                 await setItemStatusInOverlay(tabId, 'Not Available');
+                detectionsInARow = 0;
                 break;
             case 'notfound':
                 await setItemStatusInOverlay(tabId, 'Not Available');
                 await setProxyStatusInOverlay(tabId, 'Detected');
+                detectionsInARow++;
                 break;
         }
     } else {
         await setProxyStatusInOverlay(tabId, 'Detected');
+        detectionsInARow++;
     }
 
     await showLastUpdatedInOverlay(tabId);
@@ -224,7 +227,13 @@ async function startBackgroundAvailabilityCheck(tabId, url) {
     // wait 5 seconds
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    await startBackgroundAvailabilityCheck(tabId, url);
+    if (detectionsInARow > 5) {
+        setItemStatusInOverlay(tabId, 'Not Available');
+        setProxyStatusInOverlay(tabId, 'Detected 5 times in a row - stopped');
+        return;
+    }
+    
+    await startBackgroundAvailabilityCheck(tabId, url, detectionsInARow);
 }
 
 chrome.runtime.onConnect.addListener((port) => {
