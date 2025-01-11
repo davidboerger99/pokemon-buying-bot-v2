@@ -27,7 +27,31 @@ async function fetchFromOxylabs(url) {
     }
     
     const data = await response.json();
-    console.log("Data from Oxylabs: ", data);
+    return data;
+}
+
+async function fetchFromBrightData(url) {
+    const { config } = await chrome.storage.local.get('config');
+    console.log("BrightData username: ", config.brightdataUsername);
+    console.log("BrightData password: ", config.brightdataPassword);
+
+    const proxyUrl = `http://brd.superproxy.io:33335`;
+    const proxyAuth = `Basic ${btoa(`${config.brightdataUsername}:${config.brightdataPassword}`)}`;
+
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'Proxy-Authorization': proxyAuth,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        console.log(await response.text());
+        throw new Error(`Error fetching data: ${response.status}`);
+    }
+
+    const data = await response.text();
     return data;
 }
 
@@ -67,8 +91,50 @@ function injectPluginOverlay(tabId) {
 
 async function checkAvailability(urls) {
    for (let i = 0; i < urls.length; i++) {
-    await fetchFromOxylabs(urls[i].url);
+    // await fetchFromOxylabs(urls[i].url);
+    await fetchFromBrightData(urls[i].url);
    }
+}
+
+async function showUpdateStatusInOverlay(tabId) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function: () => {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            loadingSpinner.style.display = 'inline-block';
+
+            const updateTimeSpan = document.getElementById('update-time');
+            updateTimeSpan.textContent = `Updating...`;
+        }
+    });
+}
+
+async function showLastUpdatedInOverlay(tabId) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function: () => {
+            const updateTimeSpan = document.getElementById('update-time');
+            const now = new Date();
+            updateTimeSpan.textContent = `Updated: ${now.toLocaleTimeString()}`;
+
+            const loadingSpinner = document.getElementById('loading-spinner');
+            loadingSpinner.style.display = 'none';
+        }
+    });
+}
+
+async function startBackgroundAvailabilityCheck(tabId, url) {
+    await showUpdateStatusInOverlay(tabId);
+    // wait 4 seconds
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    await showLastUpdatedInOverlay(tabId);
+
+    // wait 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
+
+    await startBackgroundAvailabilityCheck(tabId, url);
+    // const data = await fetchFromBrightData(url);
 }
 
 chrome.runtime.onConnect.addListener((port) => {
@@ -77,10 +143,12 @@ chrome.runtime.onConnect.addListener((port) => {
     port.onMessage.addListener(async (message) => {
         if (message.action === 'startBot') {
             console.log("Bot gestartet.", message.config);  
-            await chrome.storage.local.set({ config: message.config });
+            await chrome.storage.local.set(message.config);
             const tabs = await openTabs(message.urls);
             tabs.forEach(tabId => injectPluginOverlay(tabId));
-            await checkAvailability(message.urls);
+            for (let i = 0; i < message.urls.length; i++) {
+                startBackgroundAvailabilityCheck(tabs[i], message.urls[i].url);
+            }
         }
     });
 });

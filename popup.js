@@ -56,6 +56,8 @@ function getConfig() {
         cvv: document.getElementById('cvv').value,
         oxylabsUsername: document.getElementById('proxyUsername').value,
         oxylabsPassword: document.getElementById('proxyPassword').value,
+        brightdataUsername: document.getElementById('brightdataUsername').value,
+        brightdataPassword: document.getElementById('brightdataPassword').value
     };
 }
 
@@ -76,6 +78,8 @@ function setConfig(config) {
     document.getElementById('cvv').value = config.cvv || '';
     document.getElementById('proxyUsername').value = config.oxylabsUsername || '';
     document.getElementById('proxyPassword').value = config.oxylabsPassword || '';
+    document.getElementById('brightdataUsername').value = config.brightdataUsername || '';
+    document.getElementById('brightdataPassword').value = config.brightdataPassword || '';
 }
 
 saveButton.addEventListener('click', () => {

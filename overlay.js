@@ -5,11 +5,11 @@ const htmlInjection = `
                 <svg id="plugin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                Bot Aktiv
+                Bot Active
             </div>
         </div>
         <div id="plugin-content">
-            Dieser Tab wird vom Plugin kontrolliert.
+            This tab is controlled by the plugin.
         </div>
         <div id="status-container">
             <div id="proxy-status">Proxy Status: <span id="proxy-status-value">Undetected</span></div>
@@ -134,7 +134,7 @@ async function onContentLoaded() {
 
         function updateTimestamp() {
             const now = new Date();
-            updateTimeSpan.textContent = `Aktualisiert: ${now.toLocaleTimeString()}`;
+            updateTimeSpan.textContent = `Updated: ${now.toLocaleTimeString()}`;
             // loadingSpinner.style.display = 'inline-block';
             // setTimeout(() => {
             //     loadingSpinner.style.display = 'none';
