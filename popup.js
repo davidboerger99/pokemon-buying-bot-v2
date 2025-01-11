@@ -57,7 +57,8 @@ function getConfig() {
         oxylabsUsername: document.getElementById('proxyUsername').value,
         oxylabsPassword: document.getElementById('proxyPassword').value,
         brightdataUsername: document.getElementById('brightdataUsername').value,
-        brightdataPassword: document.getElementById('brightdataPassword').value
+        brightdataPassword: document.getElementById('brightdataPassword').value,
+        brightdataApiKey: document.getElementById('brightdataApiKey').value
     };
 }
 
@@ -80,6 +81,7 @@ function setConfig(config) {
     document.getElementById('proxyPassword').value = config.oxylabsPassword || '';
     document.getElementById('brightdataUsername').value = config.brightdataUsername || '';
     document.getElementById('brightdataPassword').value = config.brightdataPassword || '';
+    document.getElementById('brightdataApiKey').value = config.brightdataApiKey || '';
 }
 
 saveButton.addEventListener('click', () => {

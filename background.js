@@ -29,15 +29,19 @@ async function fetchFromOxylabs(url) {
 async function fetchFromBrightData(url) {
     const { config } = await chrome.storage.local.get('config');
 
-    const proxyUrl = `http://brd.superproxy.io:33335`;
-    const proxyAuth = `Basic ${btoa(`${config.brightdataUsername}:${config.brightdataPassword}`)}`;
+    const body = {
+        zone: 'web_unlocker1',
+        url: url,
+        format: 'raw'
+    };
 
-    const response = await fetch(url, {
-        method: 'GET',
+    const response = await fetch('https://api.brightdata.com/request', {
+        method: 'POST',
         headers: {
-            'Proxy-Authorization': proxyAuth,
-            'Content-Type': 'application/json'
-        }
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.brightdataApiKey}`
+        },
+        body: JSON.stringify(body)
     });
 
     if (!response.ok) {
@@ -46,6 +50,7 @@ async function fetchFromBrightData(url) {
     }
 
     const data = await response.text();
+    console.log("Data from BrightData: ", data);
     return data;
 }
 
@@ -140,7 +145,25 @@ async function isPokemonCenterItemAvailable(html, tabId) {
 }
 
 async function isTargetItemAvailable(html, tabId) {
+    const result = await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const addtoCartButton = doc.evaluate('//*[@id="addToCartButtonOrTextIdFor93954435"]', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if(!addtoCartButton) {
+                return 'notfound';
+            }
 
+            if(addtoCartButton.disabled) {
+                return 'notavailable';
+            }
+            
+            return 'available';
+        },
+        args: [html]
+    });
+    return result[0].result;
 }
 
 async function isWalmartItemAvailable(html, tabId) {
@@ -241,8 +264,7 @@ chrome.runtime.onConnect.addListener((port) => {
   
     port.onMessage.addListener(async (message) => {
         if (message.action === 'startBot') {
-            console.log("Bot gestartet.", message.config);  
-            await chrome.storage.local.set(message.config);
+            chrome.storage.local.set({ config: message.config });
             const tabs = await openTabs(message.urls);
             tabs.forEach(tabId => injectPluginOverlay(tabId));
             for (let i = 0; i < message.urls.length; i++) {
