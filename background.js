@@ -1,9 +1,5 @@
-// curl -i --proxy brd.superproxy.io:33335 --proxy-user brd-customer-hl_ee35ed84-zone-web_unlocker1:g940icec1tik -k "https://www.pokemoncenter.com/product/100-10019/pokemon-tcg-scarlet-and-violet-prismatic-evolutions-pokemon-center-elite-trainer-box"
-
 async function fetchFromOxylabs(url) {
     const { config } = await chrome.storage.local.get('config');
-    console.log("Oxylabs username: ", config.oxylabsUsername);
-    console.log("Oxylabs password: ", config.oxylabsPassword);
     
     const body = {
         "url": url,
@@ -32,8 +28,6 @@ async function fetchFromOxylabs(url) {
 
 async function fetchFromBrightData(url) {
     const { config } = await chrome.storage.local.get('config');
-    console.log("BrightData username: ", config.brightdataUsername);
-    console.log("BrightData password: ", config.brightdataPassword);
 
     const proxyUrl = `http://brd.superproxy.io:33335`;
     const proxyAuth = `Basic ${btoa(`${config.brightdataUsername}:${config.brightdataPassword}`)}`;
@@ -128,6 +122,7 @@ async function CheckItemAvailability(url, html) {
     const domainIsTarget = url.includes('target.com');
     const domainIsWalmart = url.includes('walmart.com');
     const domainIsBestBuy = url.includes('bestbuy.com');
+    return false;
 }
 
 async function setProxyStatusInOverlay(tabId, status) {
@@ -143,6 +138,18 @@ async function setProxyStatusInOverlay(tabId, status) {
     });
 }
 
+async function setItemStatusInOverlay(tabId, status) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function: (status) => {
+            const itemStatusValue = document.getElementById('item-status-value');
+            itemStatusValue.textContent = status;
+            itemStatusValue.style.color = status === 'Available' ? '#4caf50' : '#ff4d4d';
+        },
+        args: [status]
+    });
+}
+
 async function startBackgroundAvailabilityCheck(tabId, url) {
 
     await showUpdateStatusInOverlay(tabId);
@@ -151,6 +158,13 @@ async function startBackgroundAvailabilityCheck(tabId, url) {
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
+        const itemAvailable = await CheckItemAvailability(url, html);
+
+        if(itemAvailable) {
+            await setItemStatusInOverlay(tabId, 'Available');
+        } else {
+            await setItemStatusInOverlay(tabId, 'Not Available');
+        }
     } else {
         await setProxyStatusInOverlay(tabId, 'Detected');
     }
@@ -161,7 +175,6 @@ async function startBackgroundAvailabilityCheck(tabId, url) {
     await new Promise(resolve => setTimeout(resolve, 5000));
 
     await startBackgroundAvailabilityCheck(tabId, url);
-    // const data = await fetchFromBrightData(url);
 }
 
 chrome.runtime.onConnect.addListener((port) => {
