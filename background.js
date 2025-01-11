@@ -123,10 +123,37 @@ async function showLastUpdatedInOverlay(tabId) {
     });
 }
 
+async function CheckItemAvailability(url, html) {
+    const domainIsPokemonCenter = url.includes('pokemoncenter.com');
+    const domainIsTarget = url.includes('target.com');
+    const domainIsWalmart = url.includes('walmart.com');
+    const domainIsBestBuy = url.includes('bestbuy.com');
+}
+
+async function setProxyStatusInOverlay(tabId, status) {
+    chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function: (status) => {
+            const proxyStatusValue = document.getElementById('proxy-status-value');
+            console.log("Proxy Status Value: ", proxyStatusValue);
+            proxyStatusValue.textContent = status;
+            proxyStatusValue.style.color = status === 'Detected' ? '#ff4d4d' : '#4caf50';
+        },
+        args: [status]
+    });
+}
+
 async function startBackgroundAvailabilityCheck(tabId, url) {
+
     await showUpdateStatusInOverlay(tabId);
     // wait 4 seconds
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    const html = await fetchFromBrightData(url);
+
+    if(html) {
+        await setProxyStatusInOverlay(tabId, 'Undetected');
+    } else {
+        await setProxyStatusInOverlay(tabId, 'Detected');
+    }
 
     await showLastUpdatedInOverlay(tabId);
 
