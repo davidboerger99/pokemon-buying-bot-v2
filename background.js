@@ -50,7 +50,6 @@ async function fetchFromBrightData(url) {
     }
 
     const data = await response.text();
-    console.log("Data from BrightData: ", data);
     return data;
 }
 
@@ -170,6 +169,26 @@ async function isWalmartItemAvailable(html, tabId) {
 }
 
 async function isBestBuyItemAvailable(html, tabId) {
+    const result = await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const addtoCartButton = doc.evaluate('//*[@id="fulfillment-add-to-cart-button-67466701"]/div/div/div/button', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            console.log(addtoCartButton);
+            if(!addtoCartButton) {
+                return 'notfound';
+            }
+
+            if(addtoCartButton.disabled) {
+                return 'notavailable';
+            }
+            
+            return 'available';
+        },
+        args: [html]
+    });
+    return result[0].result;
 }
 
 async function CheckItemAvailability(url, html, tabId) {
