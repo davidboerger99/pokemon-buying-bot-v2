@@ -117,12 +117,57 @@ async function showLastUpdatedInOverlay(tabId) {
     });
 }
 
-async function CheckItemAvailability(url, html) {
+async function isPokemonCenterItemAvailable(html, tabId) {
+    const result = await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const addtoCartButton = doc.evaluate('//*[@id="product"]/div[2]/div[2]/div[4]/button', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if(!addtoCartButton) {
+                return 'notfound';
+            }
+
+            if(addtoCartButton.disabled) {
+                return 'notavailable';
+            }
+            
+            return 'available';
+        },
+        args: [html]
+    });
+
+    return result[0].result;
+}
+
+async function isTargetItemAvailable(html, tabId) {
+
+}
+
+async function isWalmartItemAvailable(html, tabId) {
+}
+
+async function isBestBuyItemAvailable(html, tabId) {
+}
+
+async function CheckItemAvailability(url, html, tabId) {
     const domainIsPokemonCenter = url.includes('pokemoncenter.com');
     const domainIsTarget = url.includes('target.com');
     const domainIsWalmart = url.includes('walmart.com');
     const domainIsBestBuy = url.includes('bestbuy.com');
-    return false;
+
+    switch (true) {
+        case domainIsPokemonCenter:
+            return isPokemonCenterItemAvailable(html, tabId);
+        case domainIsTarget:
+            return isTargetItemAvailable(html, tabId);
+        case domainIsWalmart:
+            return isWalmartItemAvailable(html, tabId);
+        case domainIsBestBuy:
+            return isBestBuyItemAvailable(html, tabId);
+        default:
+            return false;
+    }
 }
 
 async function setProxyStatusInOverlay(tabId, status) {
@@ -130,7 +175,6 @@ async function setProxyStatusInOverlay(tabId, status) {
         target: { tabId: tabId },
         function: (status) => {
             const proxyStatusValue = document.getElementById('proxy-status-value');
-            console.log("Proxy Status Value: ", proxyStatusValue);
             proxyStatusValue.textContent = status;
             proxyStatusValue.style.color = status === 'Detected' ? '#ff4d4d' : '#4caf50';
         },
@@ -158,12 +202,18 @@ async function startBackgroundAvailabilityCheck(tabId, url) {
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
-        const itemAvailable = await CheckItemAvailability(url, html);
-
-        if(itemAvailable) {
-            await setItemStatusInOverlay(tabId, 'Available');
-        } else {
-            await setItemStatusInOverlay(tabId, 'Not Available');
+        const itemAvailable = await CheckItemAvailability(url, html, tabId);
+        switch (itemAvailable) {
+            case 'available':
+                await setItemStatusInOverlay(tabId, 'Available');
+                break;
+            case 'notavailable':
+                await setItemStatusInOverlay(tabId, 'Not Available');
+                break;
+            case 'notfound':
+                await setItemStatusInOverlay(tabId, 'Not Available');
+                await setProxyStatusInOverlay(tabId, 'Detected');
+                break;
         }
     } else {
         await setProxyStatusInOverlay(tabId, 'Detected');
