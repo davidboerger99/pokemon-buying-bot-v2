@@ -326,6 +326,8 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
             }
 
             if (currentStep === 'placeOrder') {
+                const submitButton = document.querySelector('button[data-track="Place your Order - In-line"]');
+                submitButton.click();
 
             }
 
