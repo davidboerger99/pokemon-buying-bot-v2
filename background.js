@@ -316,7 +316,7 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 addToCart();
             }
 
-            if (currentStep === 'checkout') {
+            if (currentStep === 'setQuantity') {
                 const amount = getAmount();
                 if (amount >= 10) {
                     selectAmount("10+");
@@ -336,7 +336,7 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
                     if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
                         chrome.tabs.onUpdated.removeListener(listener);
-                        return await startBestbuyBuyingProcess(tabId, url, 'checkout');
+                        return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
                     }
                 });
             });
