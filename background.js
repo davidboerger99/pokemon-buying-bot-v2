@@ -375,7 +375,6 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
     await showUpdateStatusInOverlay(tabId);
 
     const html = await fetchFromOxylabs(url);
-    console.log(html);
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
@@ -414,11 +413,11 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
     // wait 5 seconds
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    if (detectionsInARow > 5) {
-        setItemStatusInOverlay(tabId, 'Not Available');
-        setProxyStatusInOverlay(tabId, 'Detected 5 times in a row - stopped');
-        return;
-    }
+    // if (detectionsInARow > 100) {
+    //     setItemStatusInOverlay(tabId, 'Not Available');
+    //     setProxyStatusInOverlay(tabId, 'Detected 5 times in a row - stopped');
+    //     return;
+    // }
     
     await startBackgroundAvailabilityCheck(tabId, url, detectionsInARow);
 }
