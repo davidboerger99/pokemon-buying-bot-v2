@@ -273,16 +273,78 @@ function getExpect(url) {
     }
 }
 
+async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
+    console.log('Starting Bestbuy buying process');
+    await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        func: async function(currentStep) {
+            const selectShipping = () => {
+                const buttons = document.querySelectorAll('button[aria-label*="Shipping"]');
+                buttons[0].click();
+            };
+
+            const addToCart = () => {
+                const button = document.getElementsByClassName('add-to-cart-button');
+                button[0].click();
+            }
+
+            if (currentStep === 'addToCart') {
+                selectShipping();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                addToCart();
+                return currentStep;
+            }
+
+            if (currentStep === 'checkout') {
+                
+                return currentStep;
+            }
+        },
+        args: [currentStep]
+    }, (results) => {
+        const step = results[0].result;
+
+        if (step === 'addToCart') {
+            chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        return await startBestbuyBuyingProcess(tabId, url, 'checkout');
+                    }
+                });
+            });
+        }
+    });
+}
+
+
+async function startBuyingProcess(tabId, url) {
+    const domainIsPokemonCenter = url.includes('pokemoncenter.com');
+    const domainIsTarget = url.includes('target.com');
+    const domainIsWalmart = url.includes('walmart.com');
+    const domainIsBestBuy = url.includes('bestbuy.com');
+
+    switch (true) {
+        case domainIsPokemonCenter:
+            break;
+        case domainIsTarget:
+            break;
+        case domainIsWalmart:
+            break;
+        case domainIsBestBuy:
+            startBestbuyBuyingProcess(tabId, url);
+            break;
+        default:
+            return false;
+    }
+}
+
 async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) {
 
     await showUpdateStatusInOverlay(tabId);
     // const expect = getExpect(url);
     // const html = await fetchFromBrightData(url, expect);
-    console.log("before fetch");
     const html = await fetchFromOxylabs(url);
-    console.log("after fetch");
-    console.log(url);
-    console.log(html);
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
@@ -291,6 +353,14 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
                 detectionsInARow = 0;
+                await chrome.tabs.reload(tabId);
+
+                chrome.tabs.onUpdated.addListener(function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        startBuyingProcess(tabId, url);
+                    }
+                });
                 break;
             case 'notavailable':
                 await setItemStatusInOverlay(tabId, 'Not Available');
