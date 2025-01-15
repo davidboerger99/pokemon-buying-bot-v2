@@ -323,9 +323,13 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 } else {
                     selectAmount(`${amount}`);
                 }
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
             if (currentStep === 'placeOrder') {
+                const cvv = cfg.cvv;
+                const cvvInput = document.getElementById('cvv');
+                cvvInput.value = cvv;
                 const submitButton = document.querySelector('button[data-track="Place your Order - In-line"]');
                 submitButton.click();
 
