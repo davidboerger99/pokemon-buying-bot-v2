@@ -317,9 +317,10 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
             }
 
             if (currentStep === 'setQuantity') {
-                const amount = getAmount();
+                // const amount = getAmount();
+                const amount = 12;
                 if (amount >= 10) {
-                    selectAmount("10+");
+                    selectAmount("10");
                 } else {
                     selectAmount(`${amount}`);
                 }
@@ -337,6 +338,15 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                     if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
                         chrome.tabs.onUpdated.removeListener(listener);
                         return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
+                    }
+                });
+            });
+        } else if (step === 'setQuantity') {
+            chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/checkout/r/fast-track' }, () => {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        return await startBestbuyBuyingProcess(tabId, url, 'checkout');
                     }
                 });
             });
