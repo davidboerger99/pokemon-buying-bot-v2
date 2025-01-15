@@ -279,7 +279,7 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
         target: { tabId: tabId },
         func: async function(currentStep, config) {
 
-            const { config } = config;
+            const cfg = config.config;
 
             const selectShipping = () => {
                 const buttons = document.querySelectorAll('button[aria-label*="Shipping"]');
@@ -291,9 +291,15 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 button[0].click();
             }
 
-            const selectAmount = () => {
+            const selectAmount = (amount) => {
                 const select = document.getElementById('quantity-select');
                 select.value = 1;
+            }
+
+            const getAmount = () => {
+                const { urls } = cfg;
+                const url = urls.find(url => url.url.includes('bestbuy.com'));
+                return url.quantity;
             }
 
             if (currentStep === 'addToCart') {
@@ -303,7 +309,10 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
             }
 
             if (currentStep === 'checkout') {
-                
+                const amount = getAmount();
+                if (amount >= 10) {
+                    selectAmount();
+                }
             }
 
             return currentStep;
