@@ -291,9 +291,17 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 button[0].click();
             }
 
+            const getQuantitySelectElement = () => {
+                const selectElements = document.querySelectorAll('select');
+                return Array.from(selectElements).filter(element => 
+                    element.id.includes('quantity')
+                );
+            }
+
             const selectAmount = (amount) => {
-                const select = document.getElementById('quantity-select');
-                select.value = 1;
+                const select = getQuantitySelectElement()[0];
+                select.value = amount;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
             const getAmount = () => {
@@ -311,7 +319,9 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
             if (currentStep === 'checkout') {
                 const amount = getAmount();
                 if (amount >= 10) {
-                    selectAmount();
+                    selectAmount("10+");
+                } else {
+                    selectAmount(`${amount}`);
                 }
             }
 
