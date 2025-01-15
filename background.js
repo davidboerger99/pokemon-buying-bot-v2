@@ -348,6 +348,64 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
     });
 }
 
+async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
+    const config = await chrome.storage.local.get('config');
+    await chrome.scripting.executeScript({
+        target: { tabId: tabId },
+        func: async function(currentStep, config) {
+            const cfg = config.config;
+            const cvv = cfg.cvv;
+
+            const getQuantitySelectElement = () => {
+                const spanElement = Array.from(document.querySelectorAll('span'))
+                    .find(span => span.textContent.trim() === 'Qty');
+
+                console.log("spanElement", spanElement);
+
+                // Falls das <span>-Element gefunden wurde, gehe zum übergeordneten Button
+                if (spanElement) {
+                    const buttonElement = spanElement.closest('button');
+                    console.log(buttonElement); // Hier kannst du mit dem Button arbeiten
+                    return buttonElement
+                }
+            }
+
+            const getAmount = () => {
+                const { urls } = cfg;
+                const url = urls.find(url => url.url.includes('target.com'));
+                return url.quantity;
+            }
+
+            const setQuantity = (quantity) => {
+                const select = getQuantitySelectElement();
+                select.click();
+            }
+
+            if (currentStep === 'addToCart') {
+                const quantity = getAmount();
+                setQuantity(quantity);
+            }
+           
+            return currentStep;
+        },
+        args: [currentStep, config]
+    }, (results) => {
+        const step = results[0].result;
+        
+        if (step === 'addToCart') {
+            // chrome.tabs.update(tabId, { url: 'https://www.target.com/co-cart' }, () => {
+            //     chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+            //         if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+            //             chrome.tabs.onUpdated.removeListener(listener);
+            //             return await startTargetBuyingProcess(tabId, url, 'placeOrder');
+            //         }
+            //     });
+            // });
+        }
+
+    });
+}
+
 
 async function startBuyingProcess(tabId, url) {
     const domainIsPokemonCenter = url.includes('pokemoncenter.com');
@@ -359,6 +417,7 @@ async function startBuyingProcess(tabId, url) {
         case domainIsPokemonCenter:
             break;
         case domainIsTarget:
+            startTargetBuyingProcess(tabId, url);
             break;
         case domainIsWalmart:
             break;
@@ -379,7 +438,6 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
         const itemAvailable = await CheckItemAvailability(url, html, tabId);
-        console.log("Available", itemAvailable);
         switch (itemAvailable) {
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
