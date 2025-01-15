@@ -19,7 +19,8 @@ async function fetchFromOxylabs(url) {
     
     if (!response.ok) {
         console.log(await response.text());
-        throw new Error(`Error fetching data: ${response.status}`);
+        // throw new Error(`Error fetching data: ${response.status}`);
+        return null;
     }
     
     const data = await response.json();
@@ -372,13 +373,14 @@ async function startBuyingProcess(tabId, url) {
 async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) {
 
     await showUpdateStatusInOverlay(tabId);
-    // const expect = getExpect(url);
-    // const html = await fetchFromBrightData(url, expect);
+
     const html = await fetchFromOxylabs(url);
+    console.log(html);
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
         const itemAvailable = await CheckItemAvailability(url, html, tabId);
+        console.log("Available", itemAvailable);
         switch (itemAvailable) {
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
