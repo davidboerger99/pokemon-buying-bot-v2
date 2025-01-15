@@ -149,16 +149,13 @@ async function isTargetItemAvailable(html, tabId) {
         function(html) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const addtoCartButton = doc.evaluate('//*[@id="addToCartButtonOrTextIdFor93954435"]', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            if(!addtoCartButton) {
-                return 'notfound';
-            }
-
-            if(addtoCartButton.disabled) {
+            const notAvailableString = 'This item is not available';
+            const elementNotAvailable = doc.body.innerHTML.includes(notAvailableString);
+            if (elementNotAvailable) {
                 return 'notavailable';
+            } else {
+                return 'available';
             }
-            
-            return 'available';
         },
         args: [html]
     });
@@ -184,19 +181,6 @@ async function isBestBuyItemAvailable(html, tabId) {
             } else {
                 return 'available';
             }
-            // const parser = new DOMParser();
-            // const doc = parser.parseFromString(html, 'text/html');
-            // const addtoCartButton = doc.evaluate('//*[@id="fulfillment-add-to-cart-button-67466701"]/div/div/div/button', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            // console.log(addtoCartButton);
-            // if(!addtoCartButton) {
-            //     return 'notfound';
-            // }
-
-            // if(addtoCartButton.disabled) {
-            //     return 'notavailable';
-            // }
-            
-            // return 'available';
         },
         args: [html]
     });
