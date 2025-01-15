@@ -12,8 +12,8 @@ const htmlInjection = `
             This tab is controlled by the plugin.
         </div>
         <div id="status-container">
-            <div id="proxy-status">Proxy Status: <span id="proxy-status-value">Undetected</span></div>
-            <div id="item-status">Item Status: <span id="item-status-value">Available</span></div>
+            <div id="proxy-status">Proxy Status: <span id="proxy-status-value">-</span></div>
+            <div id="item-status">Item Status: <span id="item-status-value">-</span></div>
         </div>
         <div id="last-update">
             <span id="update-time">Wird aktualisiert...</span>
@@ -151,9 +151,9 @@ async function onContentLoaded() {
             itemStatusValue.style.color = status === 'Available' ? '#4caf50' : '#ff4d4d';
         }
 
-        updateTimestamp();
-        updateProxyStatus('Undetected');
-        updateItemStatus('Available');
+        // updateTimestamp();
+        // updateProxyStatus('Undetected');
+        // updateItemStatus('Available');
 
         // Example of how to update statuses (you can call these functions when needed)
         // updateProxyStatus('Detected');

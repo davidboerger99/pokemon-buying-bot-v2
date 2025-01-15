@@ -23,10 +23,10 @@ async function fetchFromOxylabs(url) {
     }
     
     const data = await response.json();
-    return data;
+    return data.results[0].content;
 }
 
-async function fetchFromBrightData(url) {
+async function fetchFromBrightData(url, expect) {
     const { config } = await chrome.storage.local.get('config');
 
     const body = {
@@ -34,12 +34,12 @@ async function fetchFromBrightData(url) {
         url: url,
         format: 'raw'
     };
-
     const response = await fetch('https://api.brightdata.com/request', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.brightdataApiKey}`
+            'Authorization': `Bearer ${config.brightdataApiKey}`,
+            'x-unblock-expect': JSON.stringify(expect)
         },
         body: JSON.stringify(body)
     });
@@ -172,19 +172,31 @@ async function isBestBuyItemAvailable(html, tabId) {
     const result = await chrome.scripting.executeScript({
         target: { tabId: tabId },
         function(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const addtoCartButton = doc.evaluate('//*[@id="fulfillment-add-to-cart-button-67466701"]/div/div/div/button', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            console.log(addtoCartButton);
-            if(!addtoCartButton) {
-                return 'notfound';
-            }
-
-            if(addtoCartButton.disabled) {
-                return 'notavailable';
+            const btnString = '<button class="c-button c-button-disabled c-button-lg c-button-block add-to-cart-button " disabled="" type="button" data-sku-id="6606082" data-button-state="COMING_SOON" style="padding:0 8px;margin-bottom:8px;margin-left:0px">Coming Soon</button>';
+            function checkButtonInHTML() {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                return doc.body.innerHTML.includes(btnString);
             }
             
-            return 'available';
+            if (checkButtonInHTML()) {
+                return 'notavailable';
+            } else {
+                return 'available';
+            }
+            // const parser = new DOMParser();
+            // const doc = parser.parseFromString(html, 'text/html');
+            // const addtoCartButton = doc.evaluate('//*[@id="fulfillment-add-to-cart-button-67466701"]/div/div/div/button', doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            // console.log(addtoCartButton);
+            // if(!addtoCartButton) {
+            //     return 'notfound';
+            // }
+
+            // if(addtoCartButton.disabled) {
+            //     return 'notavailable';
+            // }
+            
+            // return 'available';
         },
         args: [html]
     });
@@ -235,11 +247,42 @@ async function setItemStatusInOverlay(tabId, status) {
     });
 }
 
+function getExpect(url) {
+    const domainIsPokemonCenter = url.includes('pokemoncenter.com');
+    const domainIsTarget = url.includes('target.com');
+    const domainIsWalmart = url.includes('walmart.com');
+    const domainIsBestBuy = url.includes('bestbuy.com');
+
+    switch (true) {
+        case domainIsPokemonCenter:
+            return {
+                "element": '.product-add--vGAcK',
+            }
+        case domainIsTarget:
+            return {
+                "element": 'addToCartButtonOrTextIdFor93954435'
+            }
+        case domainIsWalmart:
+            return 'available';
+        case domainIsBestBuy:
+            return {
+                "element": '.add-to-cart-button'
+            }
+        default:
+            return false;
+    }
+}
+
 async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) {
 
     await showUpdateStatusInOverlay(tabId);
-    // wait 4 seconds
-    const html = await fetchFromBrightData(url);
+    // const expect = getExpect(url);
+    // const html = await fetchFromBrightData(url, expect);
+    console.log("before fetch");
+    const html = await fetchFromOxylabs(url);
+    console.log("after fetch");
+    console.log(url);
+    console.log(html);
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
