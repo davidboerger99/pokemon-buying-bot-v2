@@ -274,10 +274,13 @@ function getExpect(url) {
 }
 
 async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
-    console.log('Starting Bestbuy buying process');
+    const config = await chrome.storage.local.get('config');
     await chrome.scripting.executeScript({
         target: { tabId: tabId },
-        func: async function(currentStep) {
+        func: async function(currentStep, config) {
+
+            const { config } = config;
+
             const selectShipping = () => {
                 const buttons = document.querySelectorAll('button[aria-label*="Shipping"]');
                 buttons[0].click();
@@ -288,19 +291,24 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 button[0].click();
             }
 
+            const selectAmount = () => {
+                const select = document.getElementById('quantity-select');
+                select.value = 1;
+            }
+
             if (currentStep === 'addToCart') {
                 selectShipping();
                 await new Promise(resolve => setTimeout(resolve, 500));
                 addToCart();
-                return currentStep;
             }
 
             if (currentStep === 'checkout') {
                 
-                return currentStep;
             }
+
+            return currentStep;
         },
-        args: [currentStep]
+        args: [currentStep, config]
     }, (results) => {
         const step = results[0].result;
 
