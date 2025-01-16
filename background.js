@@ -386,6 +386,11 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 return url.quantity;
             }
 
+            const placeOrder = async () => {
+                const button = await waitForElement('button[data-test="placeOrderButton"]');
+                button.click();
+            }
+
             const setQuantity = async (quantity) => {
                 const select = await getQuantitySelectElement();
                 select.value = `${quantity}`;
@@ -403,8 +408,10 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
+            if (currentStep === 'placeOrder') {
+                await placeOrder();
+            }
 
-           
             return currentStep;
         },
         args: [currentStep, config]
