@@ -28,7 +28,7 @@ async function fetchFromOxylabs(url) {
     return data.results[0].content;
 }
 
-async function fetchFromBrightData(url, expect) {
+async function fetchFromBrightData(url) {
     const { config } = await chrome.storage.local.get('config');
 
     const body = {
@@ -40,8 +40,7 @@ async function fetchFromBrightData(url, expect) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.brightdataApiKey}`,
-            'x-unblock-expect': JSON.stringify(expect)
+            'Authorization': `Bearer ${config.brightdataApiKey}`
         },
         body: JSON.stringify(body)
     });
@@ -87,12 +86,6 @@ function injectPluginOverlay(tabId) {
         target: { tabId: tabId },
         files: ['overlay.js']
     });
-}
-
-async function checkAvailability(urls) {
-   for (let i = 0; i < urls.length; i++) {
-    await fetchFromBrightData(urls[i].url);
-   }
 }
 
 async function showUpdateStatusInOverlay(tabId) {
@@ -479,13 +472,13 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
                 detectionsInARow = 0;
                 await chrome.tabs.reload(tabId);
 
-                chrome.tabs.onUpdated.addListener(function listener(tabIdUpdated, changeInfo) {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
                     if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
                         chrome.tabs.onUpdated.removeListener(listener);
-                        startBuyingProcess(tabId, url);
+                        await startBuyingProcess(tabId, url);
                     }
                 });
-                break;
+                return;
             case 'notavailable':
                 await setItemStatusInOverlay(tabId, 'Not Available');
                 detectionsInARow = 0;
