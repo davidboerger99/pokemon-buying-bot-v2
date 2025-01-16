@@ -376,10 +376,17 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 });
             };
 
+            const trySelectShipping = async () => {
+                const element = await waitForElement('button[aria-label*="shipping"]');
+                if (element) {
+                    element.click();
+                }
+            }
+
             const addToCart = async () => {
-                const buttonElement = await waitForElement('button[data-test="orderPickupButton"]');
+                const buttonElement = await waitForElement('button[id*="addToCartButtonOrTextIdFor"]');
+                console.log(buttonElement);
                 if (buttonElement) {
-                    console.log(buttonElement); // Button gefunden
                     buttonElement.click();
                 } 
             }
@@ -407,7 +414,20 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
+            const setCvv = async () => {
+                const cvvLabel = await waitForElement('label[for="enter-cvv"]');
+                cvvLabel.remove();
+                const cvvInput = await waitForElement('input[id="enter-cvv"]');
+                cvvInput.value = cvv;
+                cvvInput.dispatchEvent(new Event('input', { bubbles: true }));
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const confirmButton = await waitForElement('button[data-test="confirm-button"]');
+                confirmButton.click();
+            }
+
             if (currentStep === 'addToCart') {
+                await trySelectShipping();
+                await new Promise(resolve => setTimeout(resolve, 500));
                 await addToCart();
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
@@ -420,6 +440,8 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
 
             if (currentStep === 'placeOrder') {
                 await placeOrder();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await setCvv();
             }
 
             return currentStep;
