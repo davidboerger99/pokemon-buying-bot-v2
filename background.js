@@ -540,13 +540,11 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
 
     await showUpdateStatusInOverlay(tabId);
 
-    // const html = await fetchFromOxylabs(url);
-    const html = true;
+    const html = await fetchFromOxylabs(url);
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
-        // const itemAvailable = await CheckItemAvailability(url, html, tabId);
-        const itemAvailable = 'available';
+        const itemAvailable = await CheckItemAvailability(url, html, tabId);
         switch (itemAvailable) {
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
