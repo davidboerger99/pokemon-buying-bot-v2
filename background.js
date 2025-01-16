@@ -350,21 +350,31 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
             const cfg = config.config;
             const cvv = cfg.cvv;
 
-            const waitForElement = (selector, maxTime = 5000) => {
-                return new Promise((resolve, reject) => {
-                    const interval = setInterval(() => {
+            const waitForElement = async (selector) => {
+                return new Promise((resolve) => {
+                    const observer = new MutationObserver((mutations) => {
                         const element = document.querySelector(selector);
-                        if (element) {
-                            clearInterval(interval);
+                        if (element && !element.disabled) {
+                            observer.disconnect();
                             resolve(element);
-                        } 
-                    }, 100);
-                    setTimeout(() => {
-                        clearInterval(interval);
-                        reject('Element not found');
-                    }, maxTime);
+                        }
+                    });
+            
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['disabled']
+                    });
+            
+                    // Check initially in case the element is already present and enabled
+                    const element = document.querySelector(selector);
+                    if (element && !element.disabled) {
+                        observer.disconnect();
+                        resolve(element);
+                    }
                 });
-            }
+            };
 
             const addToCart = async () => {
                 const buttonElement = await waitForElement('button[data-test="orderPickupButton"]');
