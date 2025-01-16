@@ -296,11 +296,16 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
             }
 
             if (currentStep === 'setQuantity') {
-                const amount = getAmount();
-                if (amount >= 10) {
-                    selectAmount("10");
-                } else {
-                    selectAmount(`${amount}`);
+                try{
+                    const amount = getAmount();
+                    if (amount >= 10) {
+                        selectAmount("10");
+                    } else {
+                        selectAmount(`${amount}`);
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch (error) {
+                    console.log("Error setting quantity", error);
                 }
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
@@ -319,6 +324,7 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
         args: [currentStep, config]
     }, (results) => {
         const step = results[0].result;
+        console.log("Step: ", step);
 
         if (step === 'addToCart') {
             chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
