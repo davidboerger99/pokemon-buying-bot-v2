@@ -260,6 +260,32 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
 
             const cfg = config.config;
 
+            const waitForElement = async (selector) => {
+                return new Promise((resolve) => {
+                    const observer = new MutationObserver((mutations) => {
+                        const element = document.querySelector(selector);
+                        if (element && !element.disabled) {
+                            observer.disconnect();
+                            resolve(element);
+                        }
+                    });
+            
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true,
+                        attributes: true,
+                        attributeFilter: ['disabled']
+                    });
+            
+                    // Check initially in case the element is already present and enabled
+                    const element = document.querySelector(selector);
+                    if (element && !element.disabled) {
+                        observer.disconnect();
+                        resolve(element);
+                    }
+                });
+            }
+
             const selectShipping = () => {
                 const buttons = document.querySelectorAll('button[aria-label*="Shipping"]');
                 buttons[0].click();
@@ -283,6 +309,13 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
+            const clickCheckout = async () => {
+                const element = await waitForElement('div[class*="checkout-buttons"]');
+                const button = element.querySelector('button');
+                button.click();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
             const getAmount = () => {
                 const { urls } = cfg;
                 const url = urls.find(url => url.url.includes('bestbuy.com'));
@@ -304,6 +337,7 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
                         selectAmount(`${amount}`);
                     }
                     await new Promise(resolve => setTimeout(resolve, 1000));
+                    await clickCheckout();
                 } catch (error) {
                     console.log("Error setting quantity", error);
                 }
@@ -506,11 +540,13 @@ async function startBackgroundAvailabilityCheck(tabId, url, detectionsInARow=0) 
 
     await showUpdateStatusInOverlay(tabId);
 
-    const html = await fetchFromOxylabs(url);
+    // const html = await fetchFromOxylabs(url);
+    const html = true;
 
     if(html) {
         await setProxyStatusInOverlay(tabId, 'Undetected');
-        const itemAvailable = await CheckItemAvailability(url, html, tabId);
+        // const itemAvailable = await CheckItemAvailability(url, html, tabId);
+        const itemAvailable = 'available';
         switch (itemAvailable) {
             case 'available':
                 await setItemStatusInOverlay(tabId, 'Available');
