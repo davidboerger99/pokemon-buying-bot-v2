@@ -356,18 +356,34 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
             const cfg = config.config;
             const cvv = cfg.cvv;
 
-            const getQuantitySelectElement = () => {
-                const spanElement = Array.from(document.querySelectorAll('span'))
-                    .find(span => span.textContent.trim() === 'Qty');
+            const waitForElement = (selector, maxTime = 5000) => {
+                return new Promise((resolve, reject) => {
+                    const interval = setInterval(() => {
+                        const element = document.querySelector(selector);
+                        if (element) {
+                            clearInterval(interval);
+                            resolve(element);
+                        }
+                    }, 100);
+                    setTimeout(() => {
+                        clearInterval(interval);
+                        reject('Element not found');
+                    }, maxTime);
+                });
+            }
 
-                console.log("spanElement", spanElement);
-
-                // Falls das <span>-Element gefunden wurde, gehe zum übergeordneten Button
-                if (spanElement) {
-                    const buttonElement = spanElement.closest('button');
-                    console.log(buttonElement); // Hier kannst du mit dem Button arbeiten
-                    return buttonElement
+            const addToCart = async () => {
+                const buttonElement = await waitForElement('button[data-test="orderPickupButton"]');
+                if (buttonElement) {
+                    console.log(buttonElement); // Button gefunden
+                    buttonElement.click();
+                } else {
+                    alert('Button nicht gefunden');
                 }
+            }
+
+
+            const getQuantitySelectElement = () => {
             }
 
             const getAmount = () => {
@@ -382,8 +398,8 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
             }
 
             if (currentStep === 'addToCart') {
-                const quantity = getAmount();
-                setQuantity(quantity);
+                await addToCart();
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
            
             return currentStep;
