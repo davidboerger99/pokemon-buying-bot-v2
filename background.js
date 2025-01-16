@@ -5,7 +5,8 @@ async function fetchFromOxylabs(url) {
         "url": url,
         "source": "universal",
         "render": "html",
-        "geo_location": "United States"
+        "geo_location": "United States",
+        "locale": "en-us"
     };
     
     const response = await fetch('https://realtime.oxylabs.io/v1/queries', {
@@ -363,7 +364,7 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                         if (element) {
                             clearInterval(interval);
                             resolve(element);
-                        }
+                        } 
                     }, 100);
                     setTimeout(() => {
                         clearInterval(interval);
@@ -377,13 +378,13 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 if (buttonElement) {
                     console.log(buttonElement); // Button gefunden
                     buttonElement.click();
-                } else {
-                    alert('Button nicht gefunden');
-                }
+                } 
             }
 
 
-            const getQuantitySelectElement = () => {
+            const getQuantitySelectElement = async () => {
+                const element = await waitForElement('select[data-test="cartItem-qty"]');
+                return element;
             }
 
             const getAmount = () => {
@@ -392,15 +393,24 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
                 return url.quantity;
             }
 
-            const setQuantity = (quantity) => {
-                const select = getQuantitySelectElement();
-                select.click();
+            const setQuantity = async (quantity) => {
+                const select = await getQuantitySelectElement();
+                select.value = `${quantity}`;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
             if (currentStep === 'addToCart') {
                 await addToCart();
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
+
+            if (currentStep === 'setQuantity') {
+                const amount = getAmount();
+                await setQuantity(amount);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+
            
             return currentStep;
         },
@@ -409,14 +419,23 @@ async function startTargetBuyingProcess(tabId, url, currentStep='addToCart') {
         const step = results[0].result;
         
         if (step === 'addToCart') {
-            // chrome.tabs.update(tabId, { url: 'https://www.target.com/co-cart' }, () => {
-            //     chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
-            //         if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
-            //             chrome.tabs.onUpdated.removeListener(listener);
-            //             return await startTargetBuyingProcess(tabId, url, 'placeOrder');
-            //         }
-            //     });
-            // });
+            chrome.tabs.update(tabId, { url: 'https://www.target.com/cart' }, () => {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        return await startTargetBuyingProcess(tabId, url, 'setQuantity');
+                    }
+                });
+            });
+        } else if (step === 'setQuantity') {
+            chrome.tabs.update(tabId, { url: 'https://www.target.com/checkout' }, () => {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        return await startTargetBuyingProcess(tabId, url, 'placeOrder');
+                    }
+                });
+            });
         }
 
     });
