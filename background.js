@@ -385,6 +385,11 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
 
             }
 
+            // reload page after 10 seconds
+            setTimeout(() => {
+                window.location.reload();
+            }, 10000);
+
             return currentStep;
         },
         args: [currentStep, config]
@@ -392,25 +397,39 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
         const step = results[0].result;
         console.log("Step: ", step);
 
-        // if (step === 'addToCart') {
-        //     chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
-        //         chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
-        //             if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
-        //                 chrome.tabs.onUpdated.removeListener(listener);
-        //                 return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
-        //             }
-        //         });
-        //     });
-        // } else if (step === 'setQuantity') {
-        //     chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/checkout/r/fast-track' }, () => {
-        //         chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
-        //             if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
-        //                 chrome.tabs.onUpdated.removeListener(listener);
-        //                 return await startBestbuyBuyingProcess(tabId, url, 'placeOrder');
-        //             }
-        //         });
-        //     });
-        // }
+        if (step === 'addToCart') {
+            chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo, tab) {
+                if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
+                        chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                            if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                                chrome.tabs.onUpdated.removeListener(listener);
+                                return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
+                            }
+                        });
+                    });
+                    // return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
+                }
+            });
+            // chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
+            //     chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+            //         if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+            //             chrome.tabs.onUpdated.removeListener(listener);
+            //             return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
+            //         }
+            //     });
+            // });
+        } else if (step === 'setQuantity') {
+            chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/checkout/r/fast-track' }, () => {
+                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+                        chrome.tabs.onUpdated.removeListener(listener);
+                        return await startBestbuyBuyingProcess(tabId, url, 'placeOrder');
+                    }
+                });
+            });
+        }
     });
 }
 
