@@ -385,11 +385,6 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
 
             }
 
-            // reload page after 10 seconds
-            setTimeout(() => {
-                window.location.reload();
-            }, 10000);
-
             return currentStep;
         },
         args: [currentStep, config]
