@@ -164,17 +164,32 @@ async function isBestBuyItemAvailable(html, tabId) {
     const result = await chrome.scripting.executeScript({
         target: { tabId: tabId },
         function(html) {
-            const btnString = '<button class="c-button c-button-disabled c-button-lg c-button-block add-to-cart-button " disabled="" type="button" data-sku-id="6606082" data-button-state="COMING_SOON" style="padding:0 8px;margin-bottom:8px;margin-left:0px">Coming Soon</button>';
-            function checkButtonInHTML() {
+            function isComingSoonButtonInHTML() {
+                const comingSoonButtonString = '<button class="c-button c-button-disabled c-button-lg c-button-block add-to-cart-button " disabled="" type="button" data-sku-id="6606082" data-button-state="COMING_SOON" style="padding:0 8px;margin-bottom:8px;margin-left:0px">Coming Soon</button>';
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-                return doc.body.innerHTML.includes(btnString);
+                return doc.body.innerHTML.includes(comingSoonButtonString);
             }
-            
-            if (checkButtonInHTML()) {
+
+            function shippingAndPickupNotAvailable() {
+                const pickupNotAvailableString = "Pickup not available for this item";
+                const shippingNotAvailableString = "Shipping not available for this item";
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const pickupNotAvailable = doc.body.innerHTML.includes(pickupNotAvailableString);
+                const shippingNotAvailable = doc.body.innerHTML.includes(shippingNotAvailableString);
+                return pickupNotAvailable && shippingNotAvailable;
+            }
+
+            if (isComingSoonButtonInHTML()) {
                 return 'notavailable';
             } else {
-                return 'available';
+                if (shippingAndPickupNotAvailable()) {
+                    return 'notavailable';
+                } else {
+                    return 'available';
+                }
             }
         },
         args: [html]

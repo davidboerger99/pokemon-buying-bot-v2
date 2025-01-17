@@ -16,7 +16,7 @@ const htmlInjection = `
             <div id="item-status">Item Status: <span id="item-status-value">-</span></div>
         </div>
         <div id="last-update">
-            <span id="update-time">Wird aktualisiert...</span>
+            <span id="update-time">Updating...</span>
             <div id="loading-spinner"></div>
         </div>
     </div>
