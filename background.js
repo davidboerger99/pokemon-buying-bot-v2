@@ -191,7 +191,8 @@ async function isBestBuyItemAvailable(html, tabId) {
                 const doc = parser.parseFromString(html, 'text/html');
                 const pickupNotAvailable = doc.body.innerHTML.includes(pickupNotAvailableString);
                 const shippingNotAvailable = doc.body.innerHTML.includes(shippingNotAvailableString);
-                return pickupNotAvailable && shippingNotAvailable;
+                return shippingNotAvailable;
+                // return pickupNotAvailable && shippingNotAvailable;
             }
 
             if (isComingSoonButtonInHTML()) {
