@@ -3,7 +3,7 @@
     "name": "Pokemon Buying Bot V2",
     "version": "1.0",
     "description": "This extension will automatically buy pokemon drops from the market",
-    "permissions": ["tabs", "storage", "scripting", "proxy", "webRequest", "webRequestBlocking", "https://flex.cybersource.com/", "activeTab", "https://realtime.oxylabs.io/"],
+    "permissions": ["tabs", "storage", "scripting", "proxy", "webRequest", "webRequestBlocking", "https://flex.cybersource.com/", "activeTab", "https://realtime.oxylabs.io/", "offscreen" ],
     "host_permissions": [
       "<all_urls>"
     ],
@@ -15,6 +15,13 @@
         "128": "icons/icon128.png"
       }
     },
+    "offscreen_documents": [
+      {
+        "url": "audio.html",
+        "reasons": ["AUDIO_PLAYBACK"],
+        "justification": "notification"
+      }
+    ],
     "background": {
       "service_worker": "background.js"
     },

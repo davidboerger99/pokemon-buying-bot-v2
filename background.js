@@ -1,3 +1,15 @@
+function playNotificationSound() {
+    if (chrome.offscreen) {
+        chrome.offscreen.createDocument({
+            url: chrome.runtime.getURL('audio.html'),
+            reasons: ['AUDIO_PLAYBACK'],
+            justification: 'notification',
+        });
+    } else {
+        console.error('Offscreen API is not available.');
+    }
+}
+
 async function fetchFromOxylabs(url) {
     const { config } = await chrome.storage.local.get('config');
     
@@ -268,13 +280,18 @@ function getExpect(url) {
 }
 
 async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
+    playNotificationSound();
     const config = await chrome.storage.local.get('config');
     await chrome.scripting.executeScript({
         target: { tabId: tabId },
         func: async function(currentStep, config) {
 
             const cfg = config.config;
-
+            // inject audio with autplay
+            // document.body.insertAdjacentHTML('beforeend', '<audio id="audio" autoplay><source src="https://cdn.pixabay.com/audio/2022/03/19/audio_80288ed9d9.mp3" type="audio/mpeg"></audio>');
+            // const audio = new Audio();
+            // audio.src = "https://cdn.pixabay.com/audio/2022/03/19/audio_80288ed9d9.mp3";
+            // audio.play();
             const waitForElement = async (selector) => {
                 return new Promise((resolve) => {
                     const observer = new MutationObserver((mutations) => {
@@ -375,25 +392,25 @@ async function startBestbuyBuyingProcess(tabId, url, currentStep='addToCart') {
         const step = results[0].result;
         console.log("Step: ", step);
 
-        if (step === 'addToCart') {
-            chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
-                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
-                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
-                        chrome.tabs.onUpdated.removeListener(listener);
-                        return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
-                    }
-                });
-            });
-        } else if (step === 'setQuantity') {
-            chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/checkout/r/fast-track' }, () => {
-                chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
-                    if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
-                        chrome.tabs.onUpdated.removeListener(listener);
-                        return await startBestbuyBuyingProcess(tabId, url, 'placeOrder');
-                    }
-                });
-            });
-        }
+        // if (step === 'addToCart') {
+        //     chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/cart' }, () => {
+        //         chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+        //             if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+        //                 chrome.tabs.onUpdated.removeListener(listener);
+        //                 return await startBestbuyBuyingProcess(tabId, url, 'setQuantity');
+        //             }
+        //         });
+        //     });
+        // } else if (step === 'setQuantity') {
+        //     chrome.tabs.update(tabId, { url: 'https://www.bestbuy.com/checkout/r/fast-track' }, () => {
+        //         chrome.tabs.onUpdated.addListener(async function listener(tabIdUpdated, changeInfo) {
+        //             if (tabIdUpdated === tabId && changeInfo.status === 'complete') {
+        //                 chrome.tabs.onUpdated.removeListener(listener);
+        //                 return await startBestbuyBuyingProcess(tabId, url, 'placeOrder');
+        //             }
+        //         });
+        //     });
+        // }
     });
 }
 
